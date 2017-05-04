@@ -88,19 +88,26 @@ public final class ThreadAwareSecurityManager extends SecurityManager
         // prevents this configuration file check and possible reload of the configration,
         // while executing sandboxed UDF code.
         Logger l = LoggerFactory.getLogger(ThreadAwareSecurityManager.class);
-        ch.qos.logback.classic.Logger logbackLogger = (ch.qos.logback.classic.Logger) l;
-        LoggerContext ctx = logbackLogger.getLoggerContext();
-
-        TurboFilterList turboFilterList = ctx.getTurboFilterList();
-        for (int i = 0; i < turboFilterList.size(); i++)
+        try
         {
-            TurboFilter turboFilter = turboFilterList.get(i);
-            if (turboFilter instanceof ReconfigureOnChangeFilter)
+            ch.qos.logback.classic.Logger logbackLogger = (ch.qos.logback.classic.Logger) l;
+            LoggerContext ctx = logbackLogger.getLoggerContext();
+
+            TurboFilterList turboFilterList = ctx.getTurboFilterList();
+            for (int i = 0; i < turboFilterList.size(); i++)
             {
-                ReconfigureOnChangeFilter reconfigureOnChangeFilter = (ReconfigureOnChangeFilter) turboFilter;
-                turboFilterList.set(i, new SMAwareReconfigureOnChangeFilter(reconfigureOnChangeFilter));
-                break;
+                TurboFilter turboFilter = turboFilterList.get(i);
+                if (turboFilter instanceof ReconfigureOnChangeFilter)
+                {
+                    ReconfigureOnChangeFilter reconfigureOnChangeFilter = (ReconfigureOnChangeFilter) turboFilter;
+                    turboFilterList.set(i, new SMAwareReconfigureOnChangeFilter(reconfigureOnChangeFilter));
+                    break;
+                }
             }
+        }
+        catch (ClassCastException | NoClassDefFoundError e)
+        {
+            // Non-Logback logger is unsupported, so handle it here.
         }
 
         installed = true;

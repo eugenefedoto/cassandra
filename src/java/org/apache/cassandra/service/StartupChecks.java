@@ -81,7 +81,8 @@ public class StartupChecks
                                                                       checkSSTablesFormat,
                                                                       checkSystemKeyspaceState,
                                                                       checkDatacenter,
-                                                                      checkRack);
+                                                                      checkRack,
+                                                                      checkLogger);
 
     public StartupChecks withDefaultTests()
     {
@@ -400,6 +401,21 @@ public class StartupChecks
                         throw new StartupException(100, String.format(formatMessage, currentRack, storedRack));
                     }
                 }
+            }
+        }
+    };
+
+    public static final StartupCheck checkLogger = new StartupCheck()
+    {
+        public void execute()
+        {
+            try
+            {
+                ch.qos.logback.classic.Logger l = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(StartupChecks.class);
+            }
+            catch (ClassCastException | NoClassDefFoundError e)
+            {
+                logger.warn("Currently only Logback is supported, but a binding for a different logger was detected.");
             }
         }
     };
